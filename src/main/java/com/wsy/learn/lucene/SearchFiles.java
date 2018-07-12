@@ -40,6 +40,7 @@ import java.util.Date;
 
 /**
  * Simple command-line based search demo.
+ * -index /Users/xxx/workspace/learnlucene/src/main/resources/index -query 毫无压力
  */
 public class SearchFiles {
 

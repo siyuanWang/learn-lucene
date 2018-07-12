@@ -42,6 +42,7 @@ import java.util.Date;
  * <p>
  * This is a command-line application demonstrating simple Lucene indexing.
  * Run it with no command-line arguments for usage information.
+ * -index /Users/xxx/workspace/learnlucene/src/main/resources/index -docs /Users/xxx/workspace/learnlucene/src/main/resources/doc -update
  */
 public class IndexFiles {
 
