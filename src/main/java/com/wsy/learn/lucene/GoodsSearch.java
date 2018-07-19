@@ -26,8 +26,10 @@ public class GoodsSearch {
 
     public static ScoreDoc[] query(IndexSearcher searcher) throws IOException {
         Query query1 = new TermQuery(new Term("title", "男装"));
+        Query query2 = new TermQuery(new Term("cid1", "13212"));
         BooleanClause bc1 = new BooleanClause(query1, BooleanClause.Occur.MUST);
-        BooleanQuery boolQuery = new BooleanQuery.Builder().add(bc1).build();
+        BooleanClause bc2 = new BooleanClause(query2, BooleanClause.Occur.SHOULD);
+        BooleanQuery boolQuery = new BooleanQuery.Builder().add(bc1).add(bc2).build();
         // 返回前10条
         TopDocs topDocs = searcher.search(boolQuery, 10);
         return topDocs.scoreDocs;
