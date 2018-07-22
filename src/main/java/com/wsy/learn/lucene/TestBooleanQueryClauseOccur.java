@@ -1,7 +1,9 @@
 package com.wsy.learn.lucene;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
@@ -11,6 +13,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 
 import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * 1．MUST和MUST：取得连个查询子句的交集。
@@ -38,7 +41,7 @@ public class TestBooleanQueryClauseOccur {
             "康师傅有调料包", //8
             "小当家没有调料包", //9
             "小当家要吃5袋才能吃饱", //10
-            "康师傅吃的时候，要加个蛋，再来根香肠"// 11
+            "康师傅康师傅吃的时候，要加个蛋，再来根香肠"// 11
     };
 
     protected void setUp() throws Exception {
@@ -50,7 +53,6 @@ public class TestBooleanQueryClauseOccur {
         for (String line : DOC_TEXT_LINES) {
             Document doc = new Document();
             doc.add(new TextField("title", line, Field.Store.YES));
-
             writer.addDocument(doc);
         }
         writer.commit();
@@ -62,6 +64,7 @@ public class TestBooleanQueryClauseOccur {
     }
 
     protected void shutdown() throws IOException {
+
         writer.close();
     }
 
@@ -71,16 +74,16 @@ public class TestBooleanQueryClauseOccur {
      */
     public void testOccurCombination1() throws Exception {
 
-
-        TermQuery termQuery = new TermQuery(new Term("title", "康师傅"));
+        TermQuery termQuery = new TermQuery(new Term("title", "蛋"));
         BooleanClause bc1 = new BooleanClause(termQuery, BooleanClause.Occur.MUST);
-        BooleanQuery query = new BooleanQuery.Builder().add(bc1).build();
+        Query query = new BooleanQuery.Builder().add(bc1).build();
 
         ScoreDoc[] docs = searcher.search(query, 10).scoreDocs;
 
         System.out.println("=== simgle must ===");
         for (ScoreDoc doc : docs) {
-            //Explanation explanation = searcher.explain(query, scoreDoc.doc);
+            Explanation explanation = searcher.explain(query, doc.doc);
+            System.out.println("explain:" + explanation.toString());
             System.out.println("docID : " + doc.doc + ", score: " + doc.score + ", content :" + reader.document(doc.doc).get("title").toString());
         }
     }
@@ -143,7 +146,7 @@ public class TestBooleanQueryClauseOccur {
         BooleanClause bc = new BooleanClause(termQuery, BooleanClause.Occur.MUST);
 
         TermQuery termQuery1 = new TermQuery(new Term("title", "香肠"));
-        BooleanClause bc1 = new BooleanClause(termQuery1, BooleanClause.Occur.MUST_NOT);
+        BooleanClause bc1 = new BooleanClause(termQuery1, BooleanClause.Occur.MUST);
 
         BooleanQuery query = new BooleanQuery.Builder().add(bc).add(bc1).build();
 
@@ -269,11 +272,79 @@ public class TestBooleanQueryClauseOccur {
         }
     }
 
+    /**
+     * 非法boolean入参: 既有mustNot 又有filter
+     * @throws Exception
+     */
+    public void testOccurCombination10() throws Exception {
+
+
+        TermQuery termQuery = new TermQuery(new Term("title", "康师傅"));
+        BooleanClause bc = new BooleanClause(termQuery, BooleanClause.Occur.FILTER);
+
+        TermQuery termQuery1 = new TermQuery(new Term("title", "康师傅"));
+        BooleanClause bc1 = new BooleanClause(termQuery1, BooleanClause.Occur.MUST_NOT);
+
+        BooleanQuery query = new BooleanQuery.Builder().add(bc).add(bc1).build();
+
+        ScoreDoc[] docs = searcher.search(query, 10).scoreDocs;
+
+        System.out.println("=== should ===");
+        for (ScoreDoc doc : docs) {
+            System.out.println("docID : " + doc.doc + ", score: " + doc.score + ", content :" + reader.document(doc.doc).get("title").toString());
+        }
+    }
+
+    /**
+     * 非法boolean入参: 重复filter
+     * @throws Exception
+     */
+    public void testOccurCombination11() throws Exception {
+
+
+        TermQuery termQuery = new TermQuery(new Term("title", "康师傅"));
+        BooleanClause bc = new BooleanClause(termQuery, BooleanClause.Occur.FILTER);
+
+        TermQuery termQuery1 = new TermQuery(new Term("title", "康师傅"));
+        BooleanClause bc1 = new BooleanClause(termQuery1, BooleanClause.Occur.FILTER);
+
+        BooleanQuery query = new BooleanQuery.Builder().add(bc).add(bc1).build();
+
+        ScoreDoc[] docs = searcher.search(query, 10).scoreDocs;
+
+        System.out.println("=== should ===");
+        for (ScoreDoc doc : docs) {
+            System.out.println("docID : " + doc.doc + ", score: " + doc.score + ", content :" + reader.document(doc.doc).get("title").toString());
+        }
+    }
+
+    /**
+     * 非法boolean入参: 重复filter
+     * @throws Exception
+     */
+    public void testOccurCombination12() throws Exception {
+
+
+        TermQuery termQuery = new TermQuery(new Term("title", "康师傅"));
+        BooleanClause bc = new BooleanClause(termQuery, BooleanClause.Occur.MUST);
+
+        BooleanQuery query = new BooleanQuery.Builder().add(bc).build();
+
+        ScoreDoc[] docs = searcher.search(query, 10).scoreDocs;
+
+        System.out.println("=== should ===");
+        for (ScoreDoc doc : docs) {
+            System.out.println("docID : " + doc.doc + ", score: " + doc.score + ", content :" + reader.document(doc.doc).get("title").toString());
+        }
+    }
+
+
+
     public static void main(String[] args) {
         TestBooleanQueryClauseOccur test = new TestBooleanQueryClauseOccur();
         try {
             test.setUp();
-            test.testOccurCombination9();
+            test.testOccurCombination1();
             test.shutdown();
         } catch (Exception e) {
             e.printStackTrace();
