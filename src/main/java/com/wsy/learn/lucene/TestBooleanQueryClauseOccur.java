@@ -74,16 +74,19 @@ public class TestBooleanQueryClauseOccur {
      */
     public void testOccurCombination1() throws Exception {
 
-        TermQuery termQuery = new TermQuery(new Term("title", "蛋"));
-        BooleanClause bc1 = new BooleanClause(termQuery, BooleanClause.Occur.MUST);
-        Query query = new BooleanQuery.Builder().add(bc1).build();
-
+        TermQuery termQuery1 = new TermQuery(new Term("title", "当家"));
+        TermQuery termQuery2 = new TermQuery(new Term("title", "好吃"));
+        BooleanClause bc2 = new BooleanClause(termQuery1, BooleanClause.Occur.MUST);
+        BooleanClause bc3 = new BooleanClause(termQuery2, BooleanClause.Occur.MUST);
+        //builder模式 boolQuery就像肯德基的套餐，汉堡，薯条，可乐等，可以随意组合
+        Query query = new BooleanQuery.Builder().add(bc2).add(bc3).build();
+        //策略模式
         ScoreDoc[] docs = searcher.search(query, 10).scoreDocs;
 
         System.out.println("=== simgle must ===");
         for (ScoreDoc doc : docs) {
             Explanation explanation = searcher.explain(query, doc.doc);
-            System.out.println("explain:" + explanation.toString());
+            //System.out.println("explain:" + explanation.toString());
             System.out.println("docID : " + doc.doc + ", score: " + doc.score + ", content :" + reader.document(doc.doc).get("title").toString());
         }
     }
