@@ -45,6 +45,7 @@ import java.util.Date;
 public class SearchFiles {
 
     private SearchFiles() {
+
     }
 
     /**
