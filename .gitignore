@@ -1,3 +1,8 @@
 .idea/
 target/
 *.iml
+*.cfe
+*.cfs
+*.si
+*.lock
+segments_*
